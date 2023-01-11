@@ -1,12 +1,14 @@
 FROM golang:1.19.4-bullseye
 
 ARG CUBEFS_VERSION
+ARG CPUTYPE
 ENV CUBEFS_VERSION ${CUBEFS_VERSION:-v3.2.0}
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=Asia/Shanghai
 ENV MAVEN_VERSION=3.8.2
 ENV MAVEN_HOME=/usr/local/maven
 ENV PATH=${PATH}:${MAVEN_HOME}/bin
+ENV CPUTYPE ${CPUTYPE:}
 
 RUN \
     set -eux && \
