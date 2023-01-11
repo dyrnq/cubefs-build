@@ -16,7 +16,8 @@ jobs:
           sudo apt-get -y install build-essential cmake zlib1g-dev libbz2-dev liblz4-dev ca-certificates curl jq gnupg2 ca-certificates psmisc procps xz-utils rsync libglib2.0-dev libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config
       - name: Get version
         id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        #run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
       - name: Test version
         run: |
@@ -29,7 +30,8 @@ jobs:
 
       - name: Get gopath
         id: get_gopath
-        run: echo ::set-output name=GOPATH::$(go env GOPATH)
+        #run: echo ::set-output name=GOPATH::$(go env GOPATH)
+        run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_OUTPUT
 
       - run: go env
       - run: go version
@@ -45,18 +47,27 @@ jobs:
         with:
           maven-version: 3.8.2
 
-      - name: Build cubefs binary
-        shell: bash
-        run: |
-          git clone --verbose --progress --depth 1 --branch ${{ steps.get_version.outputs.VERSION }} https://github.com/cubefs/cubefs.git
-          pushd cubefs &>/dev/null || exit 1
-            ./build.sh
-          popd &>/dev/null
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
 
-          pushd cubefs/build/bin &>/dev/null || exit 1
-            tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz *
-            tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *
-          popd
+      - name: Inspect builder
+        run: |
+          echo "Name:      ${{ steps.buildx.outputs.name }}"
+          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+          echo "Status:    ${{ steps.buildx.outputs.status }}"
+          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
+
+      - name: Build dockerfile (with no push)
+        run: |
+          docker buildx build --platform linux/amd64 --output "type=image,push=false" --file ./Dockerfile . \
+          --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
+          --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
+          docker run -it --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz * && tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *"
 
       - name: Release
         uses: softprops/action-gh-release@v1
