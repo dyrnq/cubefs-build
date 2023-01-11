@@ -8,7 +8,7 @@ ENV TZ=Asia/Shanghai
 ENV MAVEN_VERSION=3.8.2
 ENV MAVEN_HOME=/usr/local/maven
 ENV PATH=${PATH}:${MAVEN_HOME}/bin
-ENV CPUTYPE ${CPUTYPE:}
+ENV CPUTYPE ${CPUTYPE:-}
 
 RUN \
     set -eux && \
