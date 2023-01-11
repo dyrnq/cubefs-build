@@ -94,5 +94,3 @@ jobs:
           files: |
             /tmp/cubefs-linux-amd64.tar.xz
             /tmp/cubefs-linux-amd64.tar.gz
-            # /tmp/cubefs-linux-arm64.tar.xz
-            # /tmp/cubefs-linux-arm64.tar.gz
