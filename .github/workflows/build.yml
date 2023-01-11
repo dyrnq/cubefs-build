@@ -1,0 +1,68 @@
+name: build and release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install build-essential cmake zlib1g-dev libbz2-dev liblz4-dev ca-certificates curl jq gnupg2 ca-certificates psmisc procps xz-utils rsync libglib2.0-dev libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Test version
+        run: |
+          echo ${{ steps.get_version.outputs.VERSION }}
+          echo ${{ github.ref }}
+
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.19.1'
+
+      - name: Get gopath
+        id: get_gopath
+        run: echo ::set-output name=GOPATH::$(go env GOPATH)
+
+      - run: go env
+      - run: go version
+
+      # https://github.com/actions/setup-java
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '8'
+      # https://github.com/stCarolas/setup-maven
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v4.5
+        with:
+          maven-version: 3.8.2
+
+      - name: Build cubefs binary
+        shell: bash
+        run: |
+          git clone --verbose --progress --depth 1 --branch ${{ steps.get_version.outputs.VERSION }} https://github.com/cubefs/cubefs.git
+          pushd cubefs &>/dev/null || exit 1
+            ./build.sh
+          popd &>/dev/null
+
+          pushd cubefs/build/bin &>/dev/null || exit 1
+            tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz *
+            tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *
+          popd
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: "Release cubefs ${{ steps.get_version.outputs.VERSION }}.  \n source: https://github.com/cubefs/cubefs/releases/tag/${{ steps.get_version.outputs.VERSION }}"
+          files: |
+            /tmp/cubefs-linux-x86_64.tar.xz
+            /tmp/cubefs-linux-x86_64.tar.gz
