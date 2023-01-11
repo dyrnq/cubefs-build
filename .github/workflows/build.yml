@@ -69,7 +69,7 @@ jobs:
           docker buildx build --platform linux/amd64 --output "type=image,push=false" --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
           --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
-          docker run -it --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz * && tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *"
+          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz * && tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *"
 
       - name: Release
         uses: softprops/action-gh-release@v1
