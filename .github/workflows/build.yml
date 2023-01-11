@@ -70,14 +70,14 @@ jobs:
           --output "type=image,push=true" --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
           --tag dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }}
-          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
+          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
 
           docker buildx build --platform linux/arm64 \
           --output "type=image,push=true" --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
           --build-arg CPUTYPE=arm64_gcc9 \
           --tag dyrnq/cubefs-linux-arm64:${{ steps.get_version.outputs.VERSION }}
-          docker run -i --platform linux/arm64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-arm64.tar.xz * && tar -cvzf /tmp/cubefs-linux-arm64.tar.gz *"
+          docker run -i --platform linux/arm64 --rm -v /tmp:/tmp dyrnq/cubefs-linux-arm64:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-arm64.tar.xz * && tar -cvzf /tmp/cubefs-linux-arm64.tar.gz *"
 
 
       - name: Release
