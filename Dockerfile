@@ -13,7 +13,7 @@ RUN \
     apt update -y && \
     apt install build-essential tzdata ca-certificates psmisc procps gpg wget tar automake autoconf libtool make curl git unzip sudo libreadline-dev lsb-release gawk -y && \
     mkdir -p /usr/local/src/cubefs && \
-    git clone --verbose --progress --depth 1 --branch ${CUBEFS_VERSION} https://github.com/cubefs/cubefs.git && \
+    git clone --verbose --progress --depth 1 --branch ${CUBEFS_VERSION} https://github.com/cubefs/cubefs.git /usr/local/src/cubefs && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc && \
     echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list && \
