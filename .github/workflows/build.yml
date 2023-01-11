@@ -64,12 +64,21 @@ jobs:
           echo "Flags:     ${{ steps.buildx.outputs.flags }}"
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
 
-      - name: Build dockerfile (with no push)
+      - name: Build dockerfile (with push)
         run: |
-          docker buildx build --platform linux/amd64 --output "type=image,push=false" --file ./Dockerfile . \
+          docker buildx build --platform linux/amd64 \
+          --output "type=image,push=true" --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
-          --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
-          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz * && tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *"
+          --tag dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }}
+          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
+
+          docker buildx build --platform linux/arm64 \
+          --output "type=image,push=true" --file ./Dockerfile . \
+          --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
+          --build-arg CPUTYPE=arm64_gcc9 \
+          --tag dyrnq/cubefs-linux-arm64:${{ steps.get_version.outputs.VERSION }}
+          docker run -i --platform linux/arm64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-arm64.tar.xz * && tar -cvzf /tmp/cubefs-linux-arm64.tar.gz *"
+
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -77,5 +86,7 @@ jobs:
         with:
           body: "Release cubefs ${{ steps.get_version.outputs.VERSION }}.  \n source: https://github.com/cubefs/cubefs/releases/tag/${{ steps.get_version.outputs.VERSION }}"
           files: |
-            /tmp/cubefs-linux-x86_64.tar.xz
-            /tmp/cubefs-linux-x86_64.tar.gz
+            /tmp/cubefs-linux-amd64.tar.xz
+            /tmp/cubefs-linux-amd64.tar.gz
+            /tmp/cubefs-linux-arm64.tar.xz
+            /tmp/cubefs-linux-arm64.tar.gz
