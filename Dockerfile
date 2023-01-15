@@ -27,7 +27,7 @@ RUN \
 
 RUN \
     apt install -y cmake zlib1g-dev libbz2-dev liblz4-dev
-ADD batchs/${CUBEFS_VERSION}/build.batch /tmp
+ADD batchs/${CUBEFS_VERSION}/build.patch /tmp
 RUN \
     cd /usr/local/src/cubefs && \
     git apply /tmp/build.patch && \
