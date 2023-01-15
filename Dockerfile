@@ -1,4 +1,4 @@
-FROM golang:1.19.4-bullseye
+FROM golang:1.19.4-bullseye AS build
 
 ARG CUBEFS_VERSION
 ARG CPUTYPE
@@ -27,8 +27,14 @@ RUN \
 
 RUN \
     apt install -y cmake zlib1g-dev libbz2-dev liblz4-dev
-
+ADD batchs/${CUBEFS_VERSION}/build.batch /tmp
 RUN \
     cd /usr/local/src/cubefs && \
+    git apply /tmp/build.patch && \
     cat ./build.sh && \
     ./build.sh
+
+
+FROM debian:bullseye
+
+COPY --from=build /usr/local/src/cubefs/build/bin/* /usr/local/bin/
