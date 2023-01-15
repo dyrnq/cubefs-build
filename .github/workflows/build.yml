@@ -72,15 +72,27 @@ jobs:
 
       - name: Build dockerfile (with push)
         run: |
-          docker buildx build --platform linux/amd64 \
-          --output "type=image,push=true" --file ./Dockerfile . \
+          # docker buildx build --platform linux/amd64 \
+          # --output "type=image,push=true" --file ./Dockerfile . \
+          # --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
+          # --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} \
+          # --tag dyrnq/cfs-server:${{ steps.get_version.outputs.VERSION }} \
+          # --tag dyrnq/cfs-client:${{ steps.get_version.outputs.VERSION }}
+
+          docker build --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
           --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} \
           --tag dyrnq/cfs-server:${{ steps.get_version.outputs.VERSION }} \
           --tag dyrnq/cfs-client:${{ steps.get_version.outputs.VERSION }}
 
           mkdir -p /tmp/cubefs/linux-amd64
-          docker run -i --platform linux/amd64 --rm -v /tmp/cubefs/linux-amd64:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cp /usr/local/bin/* /tmp"
+          docker run -i --rm -v /tmp/cubefs/linux-amd64:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cp /usr/local/bin/* /tmp"
+          docker run -i --rm dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cfs-server -v"
+          docker run -i --rm dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cfs-client -v"
+
+          docker push dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
+          docker push dyrnq/cfs-server:${{ steps.get_version.outputs.VERSION }}
+          docker push dyrnq/cfs-client:${{ steps.get_version.outputs.VERSION }}
 
           pushd /tmp/cubefs/linux-amd64 &>/dev/null || exit 1
             tar -cvJf /tmp/cubefs-linux-amd64.tar.xz *
@@ -113,5 +125,5 @@ jobs:
         with:
           body: "Release cubefs ${{ steps.get_version.outputs.VERSION }}.  \n source: https://github.com/cubefs/cubefs/releases/tag/${{ steps.get_version.outputs.VERSION }}"
           files: |
-            /tmp/cubefs-linux-x86_64.tar.xz
-            /tmp/cubefs-linux-x86_64.tar.gz
+            /tmp/cubefs-linux-amd64.tar.xz
+            /tmp/cubefs-linux-amd64.tar.gz
