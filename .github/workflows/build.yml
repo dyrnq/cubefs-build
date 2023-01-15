@@ -49,34 +49,36 @@ jobs:
         with:
           maven-version: 3.8.2
 
-      # - name: Set up QEMU
-      #   id: qemu
-      #   uses: docker/setup-qemu-action@v2
-      # - name: Set up Docker Buildx
-      #   id: buildx
-      #   uses: docker/setup-buildx-action@v2
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
 
-      # - name: Inspect builder
-      #   run: |
-      #     echo "Name:      ${{ steps.buildx.outputs.name }}"
-      #     echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
-      #     echo "Status:    ${{ steps.buildx.outputs.status }}"
-      #     echo "Flags:     ${{ steps.buildx.outputs.flags }}"
-      #     echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
+      - name: Inspect builder
+        run: |
+          echo "Name:      ${{ steps.buildx.outputs.name }}"
+          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+          echo "Status:    ${{ steps.buildx.outputs.status }}"
+          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
 
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v2
-      #   with:
-      #     username: ${{ secrets.DOCKER_USERNAME }}
-      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # - name: Build dockerfile (with push)
-      #   run: |
-      #     docker buildx build --platform linux/amd64 \
-      #     --output "type=image,push=true" --file ./Dockerfile . \
-      #     --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
-      #     --tag dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }}
-      #     docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
+      - name: Build dockerfile (with push)
+        run: |
+          docker buildx build --platform linux/amd64 \
+          --output "type=image,push=true" --file ./Dockerfile . \
+          --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
+          --tag dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }} \
+          --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
+
+          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
 
       #     # docker buildx build --platform linux/arm64 \
       #     # --output "type=image,push=true" --file ./Dockerfile . \
@@ -86,17 +88,17 @@ jobs:
       #     # docker run -i --platform linux/arm64 --rm -v /tmp:/tmp dyrnq/cubefs-linux-arm64:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/src/cubefs/build/bin && tar -cvJf /tmp/cubefs-linux-arm64.tar.xz * && tar -cvzf /tmp/cubefs-linux-arm64.tar.gz *"
 
 
-      - name: Build
-        shell: bash
-        run: |
-          git clone --verbose --progress --depth 1 --branch ${{ steps.get_version.outputs.VERSION }} https://github.com/cubefs/cubefs.git
-          pushd cubefs &>/dev/null || exit 1
-            ./build.sh
-          popd &>/dev/null
-          pushd cubefs/build/bin &>/dev/null || exit 1
-            tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz *
-            tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *
-          popd
+      # - name: Build
+      #   shell: bash
+      #   run: |
+      #     git clone --verbose --progress --depth 1 --branch ${{ steps.get_version.outputs.VERSION }} https://github.com/cubefs/cubefs.git
+      #     pushd cubefs &>/dev/null || exit 1
+      #       ./build.sh
+      #     popd &>/dev/null
+      #     pushd cubefs/build/bin &>/dev/null || exit 1
+      #       tar -cvJf /tmp/cubefs-linux-x86_64.tar.xz *
+      #       tar -cvzf /tmp/cubefs-linux-x86_64.tar.gz *
+      #     popd
 
       - name: Release
         uses: softprops/action-gh-release@v1
