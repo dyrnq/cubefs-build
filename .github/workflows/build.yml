@@ -75,10 +75,17 @@ jobs:
           docker buildx build --platform linux/amd64 \
           --output "type=image,push=true" --file ./Dockerfile . \
           --build-arg CUBEFS_VERSION=${{ steps.get_version.outputs.VERSION }} \
-          --tag dyrnq/cubefs-linux-amd64:${{ steps.get_version.outputs.VERSION }} \
-          --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }}
+          --tag dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} \
+          --tag dyrnq/cfs-server:${{ steps.get_version.outputs.VERSION }} \
+          --tag dyrnq/cfs-client:${{ steps.get_version.outputs.VERSION }}
 
-          docker run -i --platform linux/amd64 --rm -v /tmp:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cd /usr/local/bin && tar -cvJf /tmp/cubefs-linux-amd64.tar.xz * && tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *"
+          mkdir -p /tmp/cubefs/linux-amd64
+          docker run -i --platform linux/amd64 --rm -v /tmp/cubefs/linux-amd64:/tmp dyrnq/cubefs:${{ steps.get_version.outputs.VERSION }} bash -c "cp /usr/local/bin/* /tmp"
+
+          pushd /tmp/cubefs/linux-amd64 &>/dev/null || exit 1
+            tar -cvJf /tmp/cubefs-linux-amd64.tar.xz *
+            tar -cvzf /tmp/cubefs-linux-amd64.tar.gz *
+          popd &>/dev/null || exit 1
 
       #     # docker buildx build --platform linux/arm64 \
       #     # --output "type=image,push=true" --file ./Dockerfile . \
