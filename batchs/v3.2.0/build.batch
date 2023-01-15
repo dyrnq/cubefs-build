@@ -1,0 +1,120 @@
+diff --git a/build.sh b/build.sh
+index 11736f5c..eca23515 100755
+--- a/build.sh
++++ b/build.sh
+@@ -4,6 +4,7 @@ RootPath=$(cd $(dirname $0); pwd)
+ 
+ 
+ build_linux_x86_64() {
++     get_rocksdb_compress_dep
+      make
+ 
+ }
+diff --git a/build/build.sh b/build/build.sh
+index 4f18032b..c544a858 100755
+--- a/build/build.sh
++++ b/build/build.sh
+@@ -31,7 +31,7 @@ NPROC=${NPROC:-"1"}
+ 
+ GCC_LIBRARY_PATH="/lib /lib64 /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64"
+ cgo_cflags=""
+-cgo_ldflags="-lstdc++ -lm"
++cgo_ldflags="-Wl,-Bdynamic -lstdc++ -Wl,-Bdynamic -lm"
+ 
+ case $(uname -s | tr 'A-Z' 'a-z') in
+     "linux"|"darwin")
+@@ -61,7 +61,7 @@ build_zlib() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${ZlibSrcPath}"
+-    cgo_ldflags="${cgo_ldflags} -L${ZlibBuildPath} -lz"
++    cgo_ldflags="${cgo_ldflags} -L${ZlibBuildPath} -Wl,-Bstatic -lz"
+     LD_LIBRARY_PATH="${ZlibBuildPath}:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+     CPLUS_INCLUDE_PATH="${cgo_cflags}:$CPLUS_INCLUDE_PATH"
+@@ -84,7 +84,7 @@ build_bzip2() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${Bzip2SrcPath}"
+-    cgo_ldflags="${cgo_ldflags} -L${Bzip2BuildPath} -lbz2"
++    cgo_ldflags="${cgo_ldflags} -L${Bzip2BuildPath} -Wl,-Bstatic -lbz2"
+     LD_LIBRARY_PATH="${Bzip2BuildPath}:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+     CPLUS_INCLUDE_PATH="${cgo_cflags}:$CPLUS_INCLUDE_PATH"
+@@ -107,7 +107,7 @@ build_lz4() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${ZstdSrcPath}/programs"
+-    cgo_ldflags="${cgo_ldflags} -L${ZstdBuildPath}/lib -llz4"
++    cgo_ldflags="${cgo_ldflags} -L${ZstdBuildPath}/lib -Wl,-Bstatic -llz4"
+     LD_LIBRARY_PATH="${ZstdBuildPath}/lib:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+     CPLUS_INCLUDE_PATH="${cgo_cflags}:$CPLUS_INCLUDE_PATH"
+@@ -131,7 +131,7 @@ build_lz4() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${ZstdSrcPath}/programs"
+-    cgo_ldflags="${cgo_ldflags} -L${ZstdBuildPath}/lib -lzstd"
++    cgo_ldflags="${cgo_ldflags} -L${ZstdBuildPath}/lib -Wl,-Bstatic -lzstd"
+ 
+     LD_LIBRARY_PATH="${ZstdBuildPath}/lib:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+@@ -151,7 +151,7 @@ build_snappy() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${SnappySrcPath}"
+-    cgo_ldflags="${cgo_ldflags} -L${SnappyBuildPath} -lsnappy"
++    cgo_ldflags="${cgo_ldflags} -L${SnappyBuildPath} -Wl,-Bstatic -lsnappy"
+ 
+     LD_LIBRARY_PATH="${SnappyBuildPath}:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+@@ -184,7 +184,7 @@ build_rocksdb() {
+         popd >/dev/null
+     fi
+     cgo_cflags="${cgo_cflags} -I${RocksdbSrcPath}/include"
+-    cgo_ldflags="${cgo_ldflags} -L${RocksdbBuildPath} -lrocksdb"
++    cgo_ldflags="${cgo_ldflags} -L${RocksdbBuildPath} -Wl,-Bstatic -lrocksdb"
+ 
+     LD_LIBRARY_PATH="${RocksdbBuildPath}:${LD_LIBRARY_PATH}"
+     C_INCLUDE_PATH="${cgo_cflags}:$C_INCLUDE_PATH"
+@@ -206,27 +206,27 @@ init_gopath() {
+ }
+ 
+ pre_build_server() {
+-    rocksdb_libs=( z bz2 lz4 zstd )
+-    if [[ "$CPUTYPE" == arm64* ]];
+-    then
++    # rocksdb_libs=( z bz2 lz4 zstd )
++    # if [[ "$CPUTYPE" == arm64* ]];
++    # then
+         build_zlib
+         build_bzip2
+         build_lz4
+-     #   build_zstd
+-    else
+-        for p in ${rocksdb_libs[*]} ; do
+-            found=$(find /usr -name lib${p}.so 2>/dev/null | wc -l)
+-            if [ ${found} -gt 0 ] ; then
+-                cgo_ldflags="${cgo_ldflags} -l${p}"
+-            fi
+-        done
+-    fi
++        build_zstd
++    # else
++    #     for p in ${rocksdb_libs[*]} ; do
++    #         found=$(find /usr -name lib${p}.so 2>/dev/null | wc -l)
++    #         if [ ${found} -gt 0 ] ; then
++    #             cgo_ldflags="${cgo_ldflags} -l${p}"
++    #         fi
++    #     done
++    # fi
+ 
+     build_snappy
+     build_rocksdb
+ 
+     export CGO_CFLAGS=${cgo_cflags}
+-    export CGO_LDFLAGS="${cgo_ldflags}"
++    export CGO_LDFLAGS="${cgo_ldflags} -Wl,-Bdynamic "
+ 
+     init_gopath
+ }
